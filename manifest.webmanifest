@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Terjemah Live — Subtitle OBS",
   "short_name": "Terjemah Live",
-  "description": "Subtitle suara Indonesia dan Inggris dengan penerjemah adaptif serta Kamus Nama untuk OBS.",
+  "description": "Subtitle terjemahan langsung Indonesia dan Inggris untuk OBS.",
   "lang": "id",
   "dir": "ltr",
   "start_url": "./",
