@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta
       name="description"
-      content="Subtitle terjemahan langsung Indonesia dan Inggris untuk OBS, langsung dari Chrome tanpa API berbayar."
+      content="Subtitle suara Indonesia dan Inggris dengan penerjemah adaptif serta Kamus Nama, tanpa API berbayar."
     />
     <meta name="theme-color" content="#0d0b12" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -24,6 +24,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css" />
+    <script src="./vendor/jszip.min.js" defer></script>
     <script src="./app.js" defer></script>
   </head>
   <body>
@@ -125,6 +126,13 @@
                 <span id="translatorSupport">Memeriksa paket bahasa…</span>
               </div>
             </div>
+            <div class="support-row">
+              <span class="support-icon" id="engineIcon" aria-hidden="true"></span>
+              <div>
+                <strong>Mesin perangkat</strong>
+                <span id="engineSupport">Mendeteksi kemampuan…</span>
+              </div>
+            </div>
           </div>
 
           <details class="settings" id="settingsPanel" open>
@@ -158,6 +166,15 @@
                   <option value="2" selected>2 baris</option>
                   <option value="3">3 baris</option>
                   <option value="4">4 baris</option>
+                </select>
+              </label>
+
+              <label class="setting" for="translatorMode">
+                <span><strong>Mode penerjemah</strong></span>
+                <select id="translatorMode">
+                  <option value="auto" selected>Otomatis</option>
+                  <option value="economy">Hemat perangkat</option>
+                  <option value="maximum">Maksimum</option>
                 </select>
               </label>
 
@@ -209,6 +226,49 @@
             </div>
           </details>
 
+          <details class="settings dictionary" id="dictionaryPanel">
+            <summary>
+              <span>Kamus Nama</span>
+              <span class="summary-hint" id="dictionaryCount">0 nama</span>
+            </summary>
+            <div class="dictionary-content">
+              <div class="dictionary-intro">
+                <div>
+                  <strong>Lindungi nama dari salah dengar dan salah terjemah.</strong>
+                  <p>Masukkan nama resminya saja. Variasi pengucapan dapat dipelajari lewat mikrofon.</p>
+                </div>
+                <span class="privacy-badge">Tersimpan lokal</span>
+              </div>
+
+              <form class="name-add-form" id="nameAddForm">
+                <label for="nameInput">Tambah satu nama</label>
+                <div>
+                  <input id="nameInput" name="name" type="text" maxlength="80" autocomplete="off" placeholder="Contoh: Rizky Ramadhan" required />
+                  <button class="button button-primary button-compact" type="submit">Tambah</button>
+                </div>
+              </form>
+
+              <div class="bulk-add-block">
+                <label for="nameBulkInput">Tempel banyak nama</label>
+                <textarea id="nameBulkInput" rows="4" placeholder="Satu nama per baris&#10;Nadya Putri&#10;Farhan Akbar"></textarea>
+                <button class="button button-secondary button-compact" id="addBulkNamesButton" type="button">Tambahkan daftar</button>
+              </div>
+
+              <div class="dictionary-toolbar">
+                <label class="button button-secondary button-compact file-button" for="nameFileInput">
+                  Impor TXT/CSV/JSON/DOCX/PDF
+                </label>
+                <input class="visually-hidden" id="nameFileInput" type="file" accept=".txt,.csv,.json,.docx,.pdf,text/plain,text/csv,application/json,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+                <button class="button button-secondary button-compact" id="exportNamesButton" type="button">Ekspor cadangan</button>
+                <button class="button button-danger-subtle button-compact" id="clearNamesButton" type="button">Hapus semua</button>
+              </div>
+
+              <div class="calibration-status" id="calibrationStatus" role="status" aria-live="polite" hidden></div>
+              <p class="dictionary-empty" id="dictionaryEmpty">Belum ada nama. Tambahkan nama resmi atau impor daftar.</p>
+              <ul class="name-list" id="nameList" aria-label="Daftar nama tersimpan"></ul>
+            </div>
+          </details>
+
           <button class="button button-obs" id="obsButton" type="button">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" />
@@ -255,10 +315,36 @@
       </main>
 
       <footer>
-        <span>Diproses dari browser Anda.</span>
-        <span>Tidak ada akun atau riwayat percakapan.</span>
+        <span>Dijalankan dari browser Anda.</span>
+        <span>Tidak ada akun atau database aplikasi.</span>
       </footer>
     </div>
+
+    <dialog class="name-dialog" id="nameEditorDialog" aria-labelledby="nameEditorTitle">
+      <form id="nameEditorForm">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">Kamus Nama</p>
+            <h2 id="nameEditorTitle">Edit nama</h2>
+          </div>
+          <button class="dialog-close" id="closeNameEditorButton" type="button" aria-label="Tutup">×</button>
+        </div>
+        <input id="nameEditorId" type="hidden" />
+        <label class="dialog-field" for="nameEditorInput">
+          <span>Nama resmi</span>
+          <input id="nameEditorInput" type="text" maxlength="80" required />
+        </label>
+        <label class="dialog-field" for="nameAliasInput">
+          <span>Variasi yang sudah dipelajari</span>
+          <textarea id="nameAliasInput" rows="4" placeholder="Pisahkan dengan koma"></textarea>
+        </label>
+        <p class="dialog-note">Alias biasanya dibuat otomatis dari hasil kalibrasi mikrofon. Anda tetap dapat memperbaikinya di sini.</p>
+        <div class="dialog-actions">
+          <button class="button button-secondary" id="cancelNameEditorButton" type="button">Batal</button>
+          <button class="button button-primary" type="submit">Simpan</button>
+        </div>
+      </form>
+    </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
   </body>
