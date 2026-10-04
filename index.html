@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="Subtitle terjemahan langsung Indonesia dan Inggris untuk OBS, langsung dari Chrome tanpa API berbayar."
+    />
+    <meta name="theme-color" content="#0d0b12" />
+    <title>Terjemah Live — Subtitle OBS</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23ec2f8b'/%3E%3Cpath d='M18 21h28v17H31l-9 7v-7h-4z' fill='white'/%3E%3Cpath d='M25 27h14M25 32h10' stroke='%23ec2f8b' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell" id="appShell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Terjemah Live">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img">
+              <path d="M8 5.5a4 4 0 0 1 8 0v6a4 4 0 0 1-8 0v-6Z" />
+              <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M8.5 21h7" />
+            </svg>
+          </span>
+          <span>
+            <strong>Terjemah Live</strong>
+            <small>Subtitle untuk OBS</small>
+          </span>
+        </a>
+
+        <div class="live-status" id="liveStatus" data-state="idle" role="status" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="liveStatusText">Belum aktif</span>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="control-column" aria-labelledby="controlTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Kontrol</p>
+              <h1 id="controlTitle">Bicara, lalu tampilkan terjemahannya.</h1>
+            </div>
+          </div>
+
+          <div class="direction-block">
+            <span class="field-label">Arah bahasa</span>
+            <div class="direction-row">
+              <div class="segmented" role="group" aria-label="Pilih arah bahasa">
+                <button class="direction-option is-active" type="button" data-direction="id-en" aria-pressed="true">
+                  <span>ID</span>
+                  <strong>Indonesia</strong>
+                </button>
+                <button class="direction-option" type="button" data-direction="en-id" aria-pressed="false">
+                  <span>EN</span>
+                  <strong>English</strong>
+                </button>
+              </div>
+              <button class="icon-button" id="swapButton" type="button" aria-label="Balik arah bahasa" title="Balik arah bahasa (Spasi)">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M7 7h11m0 0-3-3m3 3-3 3M17 17H6m0 0 3 3m-3-3 3-3" />
+                </svg>
+              </button>
+            </div>
+            <p class="direction-summary" id="directionSummary">Indonesia didengar, English ditampilkan.</p>
+          </div>
+
+          <div class="primary-actions">
+            <button class="button button-primary" id="startButton" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 5a3 3 0 0 1 6 0v6a3 3 0 0 1-6 0V5Z" />
+                <path d="M6 11a6 6 0 0 0 12 0M12 17v3M9 20h6" />
+              </svg>
+              <span id="startButtonText">Mulai mikrofon</span>
+            </button>
+            <button class="button button-secondary" id="demoButton" type="button">Uji subtitle</button>
+          </div>
+
+          <div class="support-card" aria-label="Kesiapan perangkat">
+            <div class="support-row">
+              <span class="support-icon" id="speechIcon" aria-hidden="true"></span>
+              <div>
+                <strong>Pengenalan suara</strong>
+                <span id="speechSupport">Memeriksa Chrome…</span>
+              </div>
+            </div>
+            <div class="support-row">
+              <span class="support-icon" id="translatorIcon" aria-hidden="true"></span>
+              <div>
+                <strong>Penerjemah</strong>
+                <span id="translatorSupport">Memeriksa paket bahasa…</span>
+              </div>
+            </div>
+          </div>
+
+          <details class="settings" id="settingsPanel" open>
+            <summary>
+              <span>Pengaturan subtitle</span>
+              <span class="summary-hint">Tampilan OBS</span>
+            </summary>
+            <div class="settings-grid">
+              <label class="setting setting-wide" for="fontSize">
+                <span>
+                  <strong>Ukuran teks</strong>
+                  <output id="fontSizeValue" for="fontSize">58 px</output>
+                </span>
+                <input id="fontSize" type="range" min="34" max="88" step="2" value="58" />
+              </label>
+
+              <label class="setting" for="captionPosition">
+                <span><strong>Posisi</strong></span>
+                <select id="captionPosition">
+                  <option value="bottom">Bawah</option>
+                  <option value="middle">Tengah</option>
+                  <option value="top">Atas</option>
+                </select>
+              </label>
+
+              <label class="setting" for="keyColor">
+                <span><strong>Latar OBS</strong></span>
+                <select id="keyColor">
+                  <option value="green">Hijau chroma</option>
+                  <option value="blue">Biru chroma</option>
+                  <option value="black">Hitam</option>
+                </select>
+              </label>
+
+              <label class="setting" for="textColor">
+                <span><strong>Warna teks</strong></span>
+                <select id="textColor">
+                  <option value="white">Putih</option>
+                  <option value="yellow">Kuning</option>
+                  <option value="magenta">Magenta terang</option>
+                </select>
+              </label>
+
+              <label class="setting" for="clearDelay">
+                <span>
+                  <strong>Hilang otomatis</strong>
+                  <output id="clearDelayValue" for="clearDelay">8 detik</output>
+                </span>
+                <input id="clearDelay" type="range" min="3" max="20" step="1" value="8" />
+              </label>
+
+              <label class="toggle-setting" for="showOriginal">
+                <span>
+                  <strong>Tampilkan teks asli</strong>
+                  <small>Di atas hasil terjemahan</small>
+                </span>
+                <span class="switch">
+                  <input id="showOriginal" type="checkbox" checked />
+                  <span aria-hidden="true"></span>
+                </span>
+              </label>
+            </div>
+          </details>
+
+          <button class="button button-obs" id="obsButton" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" />
+            </svg>
+            Buka Mode OBS
+          </button>
+          <p class="shortcut-note"><kbd>Spasi</kbd> balik bahasa · <kbd>S</kbd> mulai/berhenti · <kbd>Esc</kbd> keluar Mode OBS</p>
+        </section>
+
+        <section class="preview-column" aria-labelledby="previewTitle">
+          <div class="preview-heading">
+            <div>
+              <p class="eyebrow">Pratinjau</p>
+              <h2 id="previewTitle">Tampilan penonton</h2>
+            </div>
+            <span class="preview-ratio">16:9</span>
+          </div>
+
+          <div class="overlay-stage position-bottom key-green" id="overlayStage">
+            <div class="safe-area" aria-hidden="true"></div>
+            <div class="caption-wrap" id="captionWrap" aria-live="polite" aria-atomic="true">
+              <p class="source-caption" id="sourceCaption"></p>
+              <p class="translation-caption" id="translationCaption"></p>
+            </div>
+            <div class="empty-preview" id="emptyPreview">
+              <span class="empty-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+              <strong>Subtitle akan tampil di sini</strong>
+              <span>Gunakan “Uji subtitle” sebelum siaran.</span>
+            </div>
+            <span class="preview-label" aria-hidden="true">PREVIEW</span>
+          </div>
+
+          <div class="now-reading" id="nowReading">
+            <span id="sourceLanguageLabel">Mendengar Indonesia</span>
+            <span class="reading-divider" aria-hidden="true"></span>
+            <span id="targetLanguageLabel">Menampilkan English</span>
+          </div>
+
+          <div class="notice" id="notice" role="alert" hidden>
+            <strong id="noticeTitle">Perhatian</strong>
+            <p id="noticeText"></p>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <span>Diproses dari browser Anda.</span>
+        <span>Tidak ada akun atau riwayat percakapan.</span>
+      </footer>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  </body>
+</html>
