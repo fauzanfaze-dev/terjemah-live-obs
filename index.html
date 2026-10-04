@@ -8,12 +8,21 @@
       content="Subtitle terjemahan langsung Indonesia dan Inggris untuk OBS, langsung dari Chrome tanpa API berbayar."
     />
     <meta name="theme-color" content="#0d0b12" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Terjemah Live" />
     <title>Terjemah Live — Subtitle OBS</title>
     <link
       rel="icon"
       type="image/svg+xml"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23ec2f8b'/%3E%3Cpath d='M18 21h28v17H31l-9 7v-7h-4z' fill='white'/%3E%3Cpath d='M25 27h14M25 32h10' stroke='%23ec2f8b' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E"
     />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css" />
     <script src="./app.js" defer></script>
   </head>
@@ -33,19 +42,39 @@
           </span>
         </a>
 
-        <div class="live-status" id="liveStatus" data-state="idle" role="status" aria-live="polite">
-          <span class="status-dot" aria-hidden="true"></span>
-          <span id="liveStatusText">Belum aktif</span>
+        <div class="topbar-actions">
+          <button class="install-button" id="installButton" type="button" aria-label="Pasang aplikasi">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
+            </svg>
+            <span>Pasang aplikasi</span>
+          </button>
+          <div class="live-status" id="liveStatus" data-state="idle" role="status" aria-live="polite">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="liveStatusText">Belum aktif</span>
+          </div>
         </div>
       </header>
 
       <main class="workspace">
-        <section class="control-column" aria-labelledby="controlTitle">
+        <section class="control-column" id="controlPanel" aria-labelledby="controlTitle">
           <div class="section-heading">
             <div>
               <p class="eyebrow">Kontrol</p>
-              <h1 id="controlTitle">Bicara, lalu tampilkan terjemahannya.</h1>
+              <h1 id="controlTitle">Atur, bicara, lalu tayangkan.</h1>
             </div>
+            <button
+              class="button button-toggle"
+              id="toggleControlsButton"
+              type="button"
+              aria-controls="controlPanel"
+              aria-expanded="true"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h16M4 12h16M4 17h10" />
+              </svg>
+              <span id="toggleControlsText">Sembunyikan kontrol</span>
+            </button>
           </div>
 
           <div class="direction-block">
@@ -112,6 +141,26 @@
                 <input id="fontSize" type="range" min="34" max="88" step="2" value="58" />
               </label>
 
+              <label class="setting" for="fontFamily">
+                <span><strong>Font subtitle</strong></span>
+                <select id="fontFamily">
+                  <option value="default">Default</option>
+                  <option value="times">Times New Roman</option>
+                  <option value="poppins">Poppins</option>
+                  <option value="arial">Arial</option>
+                </select>
+              </label>
+
+              <label class="setting" for="maxLines">
+                <span><strong>Maksimum baris</strong></span>
+                <select id="maxLines">
+                  <option value="1">1 baris</option>
+                  <option value="2" selected>2 baris</option>
+                  <option value="3">3 baris</option>
+                  <option value="4">4 baris</option>
+                </select>
+              </label>
+
               <label class="setting" for="captionPosition">
                 <span><strong>Posisi</strong></span>
                 <select id="captionPosition">
@@ -126,7 +175,7 @@
                 <select id="keyColor">
                   <option value="green">Hijau chroma</option>
                   <option value="blue">Biru chroma</option>
-                  <option value="black">Hitam</option>
+                  <option value="black">Hitam murni (#000000)</option>
                 </select>
               </label>
 
@@ -139,12 +188,12 @@
                 </select>
               </label>
 
-              <label class="setting" for="clearDelay">
+              <label class="setting setting-wide" for="clearDelay">
                 <span>
-                  <strong>Hilang otomatis</strong>
+                  <strong>Hapus setelah hening</strong>
                   <output id="clearDelayValue" for="clearDelay">8 detik</output>
                 </span>
-                <input id="clearDelay" type="range" min="3" max="20" step="1" value="8" />
+                <input id="clearDelay" type="range" min="2" max="30" step="1" value="8" />
               </label>
 
               <label class="toggle-setting" for="showOriginal">
@@ -178,7 +227,7 @@
             <span class="preview-ratio">16:9</span>
           </div>
 
-          <div class="overlay-stage position-bottom key-green" id="overlayStage">
+          <div class="overlay-stage position-bottom key-green lines-2" id="overlayStage">
             <div class="safe-area" aria-hidden="true"></div>
             <div class="caption-wrap" id="captionWrap" aria-live="polite" aria-atomic="true">
               <p class="source-caption" id="sourceCaption"></p>

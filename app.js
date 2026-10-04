@@ -29,11 +29,14 @@
   const DEFAULT_SETTINGS = {
     direction: "id-en",
     fontSize: 58,
+    fontFamily: "default",
+    maxLines: 2,
     captionPosition: "bottom",
     keyColor: "green",
     textColor: "white",
     clearDelay: 8,
     showOriginal: true,
+    controlsCollapsed: false,
   };
 
   const dom = {
@@ -44,6 +47,9 @@
     demoButton: document.getElementById("demoButton"),
     swapButton: document.getElementById("swapButton"),
     obsButton: document.getElementById("obsButton"),
+    installButton: document.getElementById("installButton"),
+    toggleControlsButton: document.getElementById("toggleControlsButton"),
+    toggleControlsText: document.getElementById("toggleControlsText"),
     settingsPanel: document.getElementById("settingsPanel"),
     directionOptions: Array.from(document.querySelectorAll("[data-direction]")),
     directionSummary: document.getElementById("directionSummary"),
@@ -53,6 +59,8 @@
     translatorSupport: document.getElementById("translatorSupport"),
     fontSize: document.getElementById("fontSize"),
     fontSizeValue: document.getElementById("fontSizeValue"),
+    fontFamily: document.getElementById("fontFamily"),
+    maxLines: document.getElementById("maxLines"),
     captionPosition: document.getElementById("captionPosition"),
     keyColor: document.getElementById("keyColor"),
     textColor: document.getElementById("textColor"),
@@ -90,6 +98,7 @@
     overlayMode: false,
     requestedFullscreen: false,
     fatalRecognitionError: false,
+    installPrompt: null,
   };
 
   function loadSettings() {
@@ -99,14 +108,18 @@
       const allowedPositions = ["bottom", "middle", "top"];
       const allowedKeyColors = ["green", "blue", "black"];
       const allowedTextColors = ["white", "yellow", "magenta"];
+      const allowedFonts = ["default", "times", "poppins", "arial"];
       return {
         direction: DIRECTIONS[merged.direction] ? merged.direction : DEFAULT_SETTINGS.direction,
         fontSize: Math.max(34, Math.min(88, Number(merged.fontSize) || DEFAULT_SETTINGS.fontSize)),
+        fontFamily: allowedFonts.includes(merged.fontFamily) ? merged.fontFamily : DEFAULT_SETTINGS.fontFamily,
+        maxLines: Math.max(1, Math.min(4, Math.round(Number(merged.maxLines)) || DEFAULT_SETTINGS.maxLines)),
         captionPosition: allowedPositions.includes(merged.captionPosition) ? merged.captionPosition : DEFAULT_SETTINGS.captionPosition,
         keyColor: allowedKeyColors.includes(merged.keyColor) ? merged.keyColor : DEFAULT_SETTINGS.keyColor,
         textColor: allowedTextColors.includes(merged.textColor) ? merged.textColor : DEFAULT_SETTINGS.textColor,
-        clearDelay: Math.max(3, Math.min(20, Number(merged.clearDelay) || DEFAULT_SETTINGS.clearDelay)),
+        clearDelay: Math.max(2, Math.min(30, Number(merged.clearDelay) || DEFAULT_SETTINGS.clearDelay)),
         showOriginal: merged.showOriginal !== false,
+        controlsCollapsed: merged.controlsCollapsed === true,
       };
     } catch (_error) {
       return { ...DEFAULT_SETTINGS };
@@ -172,9 +185,11 @@
   }
 
   function applySettingsUI() {
-    const { fontSize, captionPosition, keyColor, textColor, clearDelay, showOriginal } = state.settings;
+    const { fontSize, fontFamily, maxLines, captionPosition, keyColor, textColor, clearDelay, showOriginal } = state.settings;
     dom.fontSize.value = String(fontSize);
     dom.fontSizeValue.value = `${fontSize} px`;
+    dom.fontFamily.value = fontFamily;
+    dom.maxLines.value = String(maxLines);
     dom.captionPosition.value = captionPosition;
     dom.keyColor.value = keyColor;
     dom.textColor.value = textColor;
@@ -184,17 +199,34 @@
 
     document.documentElement.style.setProperty("--caption-size", `${fontSize}px`);
     const colors = { white: "#ffffff", yellow: "#ffe866", magenta: "#ff72b6" };
+    const fonts = {
+      default: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      times: '"Times New Roman", Times, serif',
+      poppins: 'Poppins, Arial, sans-serif',
+      arial: 'Arial, Helvetica, sans-serif',
+    };
     document.documentElement.style.setProperty("--caption-color", colors[textColor] || colors.white);
+    document.documentElement.style.setProperty("--caption-font", fonts[fontFamily] || fonts.default);
 
     dom.overlayStage.classList.remove("position-bottom", "position-middle", "position-top");
     dom.overlayStage.classList.add(`position-${captionPosition}`);
     dom.overlayStage.classList.remove("key-green", "key-blue", "key-black");
     dom.overlayStage.classList.add(`key-${keyColor}`);
+    dom.overlayStage.classList.remove("lines-1", "lines-2", "lines-3", "lines-4");
+    dom.overlayStage.classList.add(`lines-${maxLines}`);
     dom.overlayStage.classList.toggle("hide-original", !showOriginal);
 
     document.body.classList.remove("key-blue-body", "key-black-body");
     if (keyColor === "blue") document.body.classList.add("key-blue-body");
     if (keyColor === "black") document.body.classList.add("key-black-body");
+    applyControlsUI();
+  }
+
+  function applyControlsUI() {
+    const collapsed = state.settings.controlsCollapsed;
+    document.body.classList.toggle("controls-collapsed", collapsed);
+    dom.toggleControlsText.textContent = collapsed ? "Tampilkan kontrol" : "Sembunyikan kontrol";
+    dom.toggleControlsButton.setAttribute("aria-expanded", String(!collapsed));
   }
 
   function updateStartButton() {
@@ -250,7 +282,7 @@
     const revision = state.captionRevision;
     renderCaption(source, dom.translationCaption.textContent, !isFinal);
     requestTranslation(source, revision, isFinal);
-    if (isFinal) scheduleCaptionClear(revision);
+    scheduleCaptionClear(revision);
   }
 
   function requestTranslation(text, captionRevision, isFinal) {
@@ -591,6 +623,16 @@
       applySettingsUI();
       saveSettings();
     });
+    dom.fontFamily.addEventListener("change", () => {
+      state.settings.fontFamily = dom.fontFamily.value;
+      applySettingsUI();
+      saveSettings();
+    });
+    dom.maxLines.addEventListener("change", () => {
+      state.settings.maxLines = Number(dom.maxLines.value);
+      applySettingsUI();
+      saveSettings();
+    });
     dom.captionPosition.addEventListener("change", () => {
       state.settings.captionPosition = dom.captionPosition.value;
       applySettingsUI();
@@ -610,6 +652,9 @@
       state.settings.clearDelay = Number(dom.clearDelay.value);
       applySettingsUI();
       saveSettings();
+      if (dom.sourceCaption.textContent || dom.translationCaption.textContent) {
+        scheduleCaptionClear(state.captionRevision);
+      }
     });
     dom.showOriginal.addEventListener("change", () => {
       state.settings.showOriginal = dom.showOriginal.checked;
@@ -623,6 +668,12 @@
     dom.demoButton.addEventListener("click", showDemo);
     dom.swapButton.addEventListener("click", swapDirection);
     dom.obsButton.addEventListener("click", enterOverlayMode);
+    dom.toggleControlsButton.addEventListener("click", () => {
+      state.settings.controlsCollapsed = !state.settings.controlsCollapsed;
+      applyControlsUI();
+      saveSettings();
+    });
+    dom.installButton.addEventListener("click", () => void installApp());
     dom.directionOptions.forEach((button) => {
       button.addEventListener("click", () => void changeDirection(button.dataset.direction));
     });
@@ -662,9 +713,56 @@
       stopListening({ quiet: true });
       disposeTranslator();
     });
+
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      state.installPrompt = event;
+      dom.installButton.classList.add("is-ready");
+    });
+
+    window.addEventListener("appinstalled", () => {
+      state.installPrompt = null;
+      dom.installButton.hidden = true;
+      showToast("Aplikasi berhasil dipasang");
+    });
+  }
+
+  async function installApp() {
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    if (standalone) {
+      showToast("Aplikasi sudah terpasang");
+      return;
+    }
+
+    if (state.installPrompt) {
+      state.installPrompt.prompt();
+      const choice = await state.installPrompt.userChoice;
+      if (choice?.outcome === "accepted") dom.installButton.hidden = true;
+      state.installPrompt = null;
+      return;
+    }
+
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    showNotice(
+      "Pasang Terjemah Live",
+      isIOS
+        ? "Di Safari, tekan Bagikan lalu pilih Tambahkan ke Layar Utama."
+        : "Buka menu Chrome, lalu pilih Instal Terjemah Live atau Tambahkan ke layar utama.",
+    );
+  }
+
+  function registerServiceWorker() {
+    if (!("serviceWorker" in navigator) || !window.isSecureContext) return;
+    navigator.serviceWorker.register("./service-worker.js").catch(() => {
+      // The live translator remains usable if offline support cannot register.
+    });
   }
 
   async function initialize() {
+    registerServiceWorker();
+    if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true) {
+      dom.installButton.hidden = true;
+    }
     applyDirectionUI();
     applySettingsUI();
     bindSettings();

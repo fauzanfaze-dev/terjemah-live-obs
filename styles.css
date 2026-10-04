@@ -18,6 +18,7 @@
   --caption-size: 58px;
   --caption-color: #ffffff;
   --caption-outline: 3px;
+  --caption-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
@@ -77,6 +78,44 @@ input:focus-visible {
   justify-content: space-between;
   min-height: 58px;
   margin-bottom: 30px;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.install-button {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(21, 18, 27, 0.82);
+  font-size: 0.78rem;
+  font-weight: 750;
+  transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
+}
+
+.install-button:hover,
+.install-button.is-ready {
+  border-color: rgba(236, 47, 139, 0.46);
+  color: #fff;
+  background: var(--accent-soft);
+}
+
+.install-button svg {
+  width: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
 }
 
 .brand {
@@ -179,15 +218,27 @@ input:focus-visible {
 }
 
 .workspace {
-  display: grid;
-  grid-template-columns: minmax(320px, 410px) minmax(0, 1fr);
-  gap: clamp(28px, 5vw, 76px);
-  align-items: start;
+  display: block;
 }
 
 .control-column,
 .preview-column {
   min-width: 0;
+}
+
+.control-column {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.2fr) minmax(280px, 1fr) minmax(280px, 1fr);
+  grid-template-areas:
+    "heading heading heading"
+    "direction actions support"
+    "settings settings settings"
+    "obs shortcuts shortcuts";
+  gap: 12px 14px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: rgba(21, 18, 27, 0.82);
 }
 
 .section-heading,
@@ -197,6 +248,12 @@ input:focus-visible {
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 20px;
+}
+
+.section-heading {
+  grid-area: heading;
+  align-items: center;
+  margin-bottom: 2px;
 }
 
 .eyebrow {
@@ -215,7 +272,7 @@ p {
 }
 
 h1 {
-  max-width: 380px;
+  max-width: 620px;
   margin-bottom: 0;
   font-size: clamp(1.72rem, 2.7vw, 2.35rem);
   line-height: 1.08;
@@ -237,6 +294,7 @@ h2 {
 }
 
 .direction-block {
+  grid-area: direction;
   padding: 17px;
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -338,10 +396,12 @@ h2 {
 }
 
 .primary-actions {
+  grid-area: actions;
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  grid-auto-rows: 1fr;
   gap: 10px;
-  margin-top: 12px;
+  margin-top: 0;
 }
 
 .button {
@@ -384,21 +444,24 @@ h2 {
 }
 
 .button-secondary,
-.button-obs {
+.button-obs,
+.button-toggle {
   border-color: var(--border);
   background: var(--surface-2);
 }
 
 .button-secondary:hover,
-.button-obs:hover {
+.button-obs:hover,
+.button-toggle:hover {
   border-color: var(--border-strong);
   background: var(--surface-3);
 }
 
 .support-card {
+  grid-area: support;
   display: grid;
   gap: 13px;
-  margin-top: 12px;
+  margin-top: 0;
   padding: 14px 16px;
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -449,7 +512,8 @@ h2 {
 }
 
 .settings {
-  margin-top: 12px;
+  grid-area: settings;
+  margin-top: 0;
   border: 1px solid var(--border);
   border-radius: 16px;
   background: rgba(21, 18, 27, 0.72);
@@ -496,7 +560,7 @@ h2 {
 
 .settings-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px 12px;
   padding: 15px 16px 17px;
   border-top: 1px solid var(--border);
@@ -509,7 +573,7 @@ h2 {
 
 .setting-wide,
 .toggle-setting {
-  grid-column: 1 / -1;
+  grid-column: span 2;
 }
 
 .setting > span,
@@ -605,16 +669,24 @@ input[type="range"] {
 }
 
 .button-obs {
-  width: 100%;
-  margin-top: 12px;
+  grid-area: obs;
+  width: auto;
+  margin-top: 0;
+}
+
+.button-toggle {
+  min-height: 42px;
+  padding: 0 14px;
 }
 
 .shortcut-note {
-  margin: 10px 0 0;
+  grid-area: shortcuts;
+  align-self: center;
+  margin: 0;
   color: var(--muted-2);
   font-size: 0.69rem;
   line-height: 1.6;
-  text-align: center;
+  text-align: left;
 }
 
 kbd {
@@ -629,8 +701,8 @@ kbd {
 }
 
 .preview-column {
-  position: sticky;
-  top: 24px;
+  position: static;
+  margin-top: 28px;
 }
 
 .preview-ratio {
@@ -704,6 +776,7 @@ kbd {
   color: var(--caption-color);
   overflow-wrap: anywhere;
   text-wrap: balance;
+  font-family: var(--caption-font);
   -webkit-text-stroke: var(--caption-outline) rgba(0, 0, 0, 0.98);
   paint-order: stroke fill;
   text-shadow: 0 3px 8px rgba(0, 0, 0, 0.72);
@@ -730,7 +803,22 @@ kbd {
   letter-spacing: -0.028em;
   line-height: 1.12;
   -webkit-box-orient: vertical;
+}
+
+.overlay-stage.lines-1 .translation-caption {
+  -webkit-line-clamp: 1;
+}
+
+.overlay-stage.lines-2 .translation-caption {
   -webkit-line-clamp: 2;
+}
+
+.overlay-stage.lines-3 .translation-caption {
+  -webkit-line-clamp: 3;
+}
+
+.overlay-stage.lines-4 .translation-caption {
+  -webkit-line-clamp: 4;
 }
 
 .caption-wrap.is-interim .translation-caption {
@@ -888,6 +976,32 @@ footer {
   transform: translateY(0);
 }
 
+body.controls-collapsed .control-column {
+  display: block;
+  padding: 12px 14px;
+}
+
+body.controls-collapsed .control-column > :not(.section-heading) {
+  display: none;
+}
+
+body.controls-collapsed .section-heading {
+  margin: 0;
+}
+
+body.controls-collapsed .section-heading .eyebrow {
+  display: none;
+}
+
+body.controls-collapsed .section-heading h1 {
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+}
+
+body.controls-collapsed .preview-column {
+  margin-top: 18px;
+}
+
 body.overlay-mode {
   overflow: hidden;
   background: #00ff00;
@@ -968,30 +1082,57 @@ body.overlay-mode.key-black-body {
   }
 }
 
+@media (max-width: 1100px) {
+  .control-column {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "heading heading"
+      "direction actions"
+      "support support"
+      "settings settings"
+      "obs shortcuts";
+  }
+
+  .settings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 940px) {
   .app-shell {
     padding-right: 22px;
     padding-left: 22px;
   }
+}
 
-  .workspace {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
-
+@media (max-width: 720px) {
   .control-column {
-    width: min(100%, 600px);
-    margin: 0 auto;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "heading"
+      "direction"
+      "actions"
+      "support"
+      "settings"
+      "obs"
+      "shortcuts";
+    padding: 16px;
   }
 
-  .preview-column {
-    position: static;
+  .section-heading {
+    align-items: flex-start;
   }
 
-  .preview-heading {
-    width: min(100%, 600px);
-    margin-right: auto;
-    margin-left: auto;
+  .section-heading h1 {
+    font-size: 1.55rem;
+  }
+
+  .primary-actions .button {
+    min-height: 52px;
+  }
+
+  .shortcut-note {
+    text-align: center;
   }
 }
 
@@ -1008,6 +1149,20 @@ body.overlay-mode.key-black-body {
     margin-bottom: 24px;
   }
 
+  .topbar-actions {
+    gap: 7px;
+  }
+
+  .install-button {
+    width: 38px;
+    min-height: 38px;
+    padding: 0;
+  }
+
+  .install-button span {
+    display: none;
+  }
+
   .brand small {
     display: none;
   }
@@ -1020,6 +1175,24 @@ body.overlay-mode.key-black-body {
 
   h1 {
     font-size: 1.78rem;
+  }
+
+  .section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .button-toggle {
+    width: 100%;
+  }
+
+  body.controls-collapsed .section-heading {
+    align-items: center;
+    flex-direction: row;
+  }
+
+  body.controls-collapsed .button-toggle {
+    width: auto;
   }
 
   .direction-block {
